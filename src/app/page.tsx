@@ -3,7 +3,8 @@
 import * as htmlToImage from 'html-to-image';
 import { toPng, toJpeg, toBlob, toPixelData, toSvg } from 'html-to-image';
 
-import { useState, MouseEvent, useRef } from 'react';
+import React, { MouseEvent, useRef, useState, WheelEvent, useEffect } from 'react';
+//import { useState, MouseEvent, useRef } from 'react';
 import { Shape } from './scripts/Shape'
 import { Line } from './scripts/Line'
 import { Point } from './scripts/Point'
@@ -20,6 +21,18 @@ export default function Home() {
   const [panStart, setPanStart] = useState<Point>(new Point(0,0));
   const [pan, setPan] = useState<Point>(new Point(0,0));
   const [isPanning, setIsPanning] = useState(false);
+
+
+  const [zoom, setZoom] = useState(1); // Initial zoom factor
+
+  const handleScroll = (e: WheelEvent) => {
+    console.log(zoom)
+    if (e.deltaY > 0) {
+      setZoom(Math.max(zoom - 0.0001*e.deltaY, 0.1));
+    } else {
+      setZoom(zoom + 0.0001*-e.deltaY);
+    }
+  };
 
   const updateCurrentShape = (s: Shape) => {
     for (let i = 0; i < shapes.length; i++) {
@@ -40,7 +53,7 @@ export default function Home() {
     if (e.button === 0) {
       if (currentShape != null) {
         setIsDrawing(true);
-        updateCurrentShape(currentShape.addPoint(new Point(pointEnd.x - pan.x, pointEnd.y - pan.y)));
+        updateCurrentShape(currentShape.addPoint(new Point(pointEnd.x/zoom-pan.x, pointEnd.y/zoom-pan.y)));
       }
     } else if (e.button === 1) {
       setPanStart(pointEnd);
@@ -54,15 +67,15 @@ export default function Home() {
     const updatedPoint = new Point(e.clientX - rect.left, e.clientY - rect.top);
     if (isDrawing) {
       if (!currentShape) return;  
-      updateCurrentShape(currentShape.setLast(new Point(updatedPoint.x - pan.x, updatedPoint.y - pan.y)));
+      updateCurrentShape(currentShape.setLast(new Point(updatedPoint.x/zoom-pan.x, updatedPoint.y/zoom-pan.y)));
     }
     if (isPanning) {
       var deltaX = updatedPoint.x - panStart.x;
       var deltaY = updatedPoint.y - panStart.y;
 
-      console.log(deltaX, ",", deltaY);
 
-      setPan(new Point(pan.x + deltaX, pan.y + deltaY));
+
+      setPan(new Point(pan.x + deltaX/zoom, pan.y + deltaY/zoom));
       setPanStart(new Point(updatedPoint.x, updatedPoint.y));
     }
   };
@@ -111,6 +124,7 @@ export default function Home() {
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
+        onWheel={(e: WheelEvent<SVGSVGElement>) => handleScroll(e)}
         width="100%"
         height="100%"
         style={{ position: 'absolute', top: 0, left: 0, background: 'lightgrey', zIndex: 1 }}
@@ -119,10 +133,10 @@ export default function Home() {
         {shapes.map((shape, i) => (
           <polyline
             key={i}
-            points={shape.getDrawPoints().map(point => `${point.x+pan.x},${point.y+pan.y}`).join(' ')}
+            points={shape.getDrawPoints().map(point => `${(point.x+pan.x)*zoom},${(point.y+pan.y)*zoom}`).join(' ')}
             fill="none"
             stroke="black"
-            strokeWidth="5"
+            strokeWidth={5*zoom}
           />
         ))}
       </svg>
