@@ -85,4 +85,21 @@ export class Shape {
         return this.points;
     }
 
+    public getDrawPoints() {
+        if (this.points.length == 0) {
+            return [];
+        }
+        return [...this.points, this.points[0]];
+    }
+
+    public addPoint(p: Point) {
+        this.points.push(p);
+        return this;
+    }
+
+    public setLast(p: Point) {
+        this.points[this.points.length-1] = p;
+        return this;
+    }
+
 }
