@@ -1,6 +1,9 @@
 'use client'
 
-import { useState, MouseEvent } from 'react';
+import * as htmlToImage from 'html-to-image';
+import { toPng, toJpeg, toBlob, toPixelData, toSvg } from 'html-to-image';
+
+import { useState, MouseEvent, useRef } from 'react';
 import { Shape } from './scripts/Shape'
 import { Line } from './scripts/Line'
 import { Point } from './scripts/Point'
@@ -85,9 +88,26 @@ export default function Home() {
     setCurrentShape(shapes[index]);
   };
 
+  const svgRef = useRef<SVGSVGElement | null>(null); // Reference to the SVG element
+
+  const exportCanvas = () => {
+    if (svgRef.current) {
+      const svgString = new XMLSerializer().serializeToString(svgRef.current);
+      const dataUrl = `data:image/svg+xml;base64,${btoa(svgString)}`;
+  
+      console.log("GO")
+      var link = document.createElement('a');
+      link.download = 'canvas.svg';
+      link.href = dataUrl;
+      link.click();
+    }
+  };
+  
+
   return (
     <main className="flex flex-col items-center justify-between p-24" style={{ height: '100vh' }}>
       <svg
+        ref={svgRef}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
@@ -110,6 +130,10 @@ export default function Home() {
       <div className="absolute top-4 left-4 z-2" style={{ zIndex: 2 }}>
         <button onClick={handleNewShape} className="bg-blue-500 text-white px-4 py-2">
           New Shape
+        </button>
+
+        <button onClick={exportCanvas} className="bg-green-500 text-white px-4 py-2 ml-4">
+          Export Canvas
         </button>
 
         <div>
