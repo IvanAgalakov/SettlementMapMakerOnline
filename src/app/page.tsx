@@ -35,6 +35,7 @@ export default function Home() {
     for (let i = 0; i < shapes.length; i++) {
       if (shapes[i] === currentShape) {
         shapes[i] = s;
+        shapes[i].calculateVoronoi();
         break;
       }
     }
@@ -130,7 +131,7 @@ export default function Home() {
         {shapes.map((shape, i) => (
           <polyline
             key={i}
-            points={shape.getDrawPoints().map(point => `${(point.x+pan.x)*zoom},${(point.y+pan.y)*zoom}`).join(' ')}
+            points={shape.getContainedDrawPoints().map(point => `${(point.x+pan.x)*zoom},${(point.y+pan.y)*zoom}`).join(' ')}
             fill="none"
             stroke="black"
             strokeWidth={5*zoom}

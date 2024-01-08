@@ -22,6 +22,6 @@
       "@/*": ["./src/*", "./src/scripts/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "**/*.ico", "**/*.css"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "**/*.ico", "**/*.css", "src/app/scripts/rhill-voronoi-core.js"],
   "exclude": ["node_modules"]
 }

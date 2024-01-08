@@ -1,5 +1,6 @@
 import { Line } from './Line'
 import { Point } from './Point'
+import Voronoi from './rhill-voronoi-core'
 
 export class Shape {
 
@@ -93,6 +94,14 @@ export class Shape {
         return [...this.points, this.points[0]];
     }
 
+    public getContainedDrawPoints() {
+        var all: Point[] = [];
+        for (let i = 0; i < this.containedShapes.length; i++) {
+            all = all.concat(this.containedShapes[i].getDrawPoints());
+        }
+        return all;
+    }
+
     public addPoint(p: Point) {
         this.points.push(p);
         return this;
@@ -104,7 +113,33 @@ export class Shape {
     }
 
     public calculateVoronoi() {
-        
+        var voronoi = new Voronoi();
+        var bbox = { xl: 0, xr: 800, yt: 0, yb: 600 }; // xl is x-left, xr is x-right, yt is y-top, and yb is y-bottom
+        var sites = [{ x: 200, y: 200 }, { x: 50, y: 250 }, { x: 400, y: 100 } /* , ... */];
+
+        // a 'vertex' is an object exhibiting 'x' and 'y' properties. The
+        // Voronoi object will add a unique 'voronoiId' property to all
+        // sites. The 'voronoiId' can be used as a key to lookup the associated cell
+        // in diagram.cells.
+
+        var diagram = voronoi.compute(sites, bbox);
+        var cells = diagram.cells;
+
+        for (let i = 0; i < cells.length; i++) {
+            if (cells[i].halfedges.length > 0) {
+                var vorShape = new Shape([]);
+                for (let q = 0; q < cells[i].halfedges.length; q++) {
+                    console.log(cells[i].halfedges);
+                    var point = cells[i].halfedges[q].getStartpoint();
+                    vorShape.addPoint(new Point(point.x, point.y));
+                    if (q == cells[i].halfedges.length-1) {
+                        point = cells[i].halfedges[q].getEndpoint();
+                        vorShape.addPoint(new Point(point.x, point.y));
+                    }
+                }
+                this.containedShapes.push(vorShape);
+            }
+        }
     }
 
 }
