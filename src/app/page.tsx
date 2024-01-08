@@ -1,7 +1,7 @@
 'use client'
 
-import * as htmlToImage from 'html-to-image';
-import { toPng, toJpeg, toBlob, toPixelData, toSvg } from 'html-to-image';
+//import * as htmlToImage from 'html-to-image';
+//import { toPng, toJpeg, toBlob, toPixelData, toSvg } from 'html-to-image';
 
 import React, { MouseEvent, useRef, useState, WheelEvent, useEffect } from 'react';
 //import { useState, MouseEvent, useRef } from 'react';
@@ -9,21 +9,18 @@ import { Shape } from './scripts/Shape'
 import { Line } from './scripts/Line'
 import { Point } from './scripts/Point'
 
-//type Coordinate = [number, number];
-//type Line = Coordinate[];
-
 export default function Home() {
-  const [shapes, setShapes] = useState<Shape[]>([]);
-  //const [lines, setLines] = useState<Line[]>([]);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [currentShape, setCurrentShape] = useState<Shape | null>(null);
+   const [shapes, setShapes] = useState<Shape[]>([]);
 
-  const [panStart, setPanStart] = useState<Point>(new Point(0,0));
-  const [pan, setPan] = useState<Point>(new Point(0,0));
-  const [isPanning, setIsPanning] = useState(false);
+   const [isDrawing, setIsDrawing] = useState(false);
+   const [currentShape, setCurrentShape] = useState<Shape | null>(null);
+
+   const [panStart, setPanStart] = useState<Point>(new Point(0,0));
+   const [pan, setPan] = useState<Point>(new Point(0,0));
+   const [isPanning, setIsPanning] = useState(false);
 
 
-  const [zoom, setZoom] = useState(1); // Initial zoom factor
+   const [zoom, setZoom] = useState(1); // Initial zoom factor
 
   const handleScroll = (e: WheelEvent) => {
     console.log(zoom)
@@ -142,7 +139,7 @@ export default function Home() {
       </svg>
 
       <div className="absolute top-4 left-4 z-2" style={{ zIndex: 2 }}>
-        <button onClick={handleNewShape} className="bg-blue-500 text-white px-4 py-2">
+        <button onClick={handleNewShape} className="bg-red-500 text-white px-4 py-2">
           New Shape
         </button>
 
@@ -167,6 +164,4 @@ export default function Home() {
       </div>
     </main>
   );
-
-
 }

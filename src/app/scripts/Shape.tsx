@@ -11,6 +11,7 @@ export class Shape {
     private width: number = 0;
     private height: number = 0;
 
+    private containedShapes: Shape[] = [];
 
     constructor(points: Point[]) {
         this.points = points;
@@ -100,6 +101,10 @@ export class Shape {
     public setLast(p: Point) {
         this.points[this.points.length-1] = p;
         return this;
+    }
+
+    public calculateVoronoi() {
+        
     }
 
 }
