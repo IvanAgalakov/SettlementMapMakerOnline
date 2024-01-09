@@ -99,6 +99,7 @@ export class Shape {
         for (let i = 0; i < this.containedShapes.length; i++) {
             all = all.concat(this.containedShapes[i].getDrawPoints());
         }
+        //all = all.concat(this.getDrawPoints());
         return all;
     }
 
@@ -112,11 +113,26 @@ export class Shape {
         return this;
     }
 
-    public calculateVoronoi() {
-        var voronoi = new Voronoi();
-        var bbox = { xl: 0, xr: 800, yt: 0, yb: 600 }; // xl is x-left, xr is x-right, yt is y-top, and yb is y-bottom
-        var sites = [{ x: 200, y: 200 }, { x: 50, y: 250 }, { x: 400, y: 100 } /* , ... */];
+    getRandomNumber(min: number, max: number): number {
+        return Math.random() * (max - min) + min;
+    }
 
+    public calculateVoronoi() {
+        this.containedShapes = []
+        var voronoi = new Voronoi();
+        var bbox = { xl: this.bottomLeft.x, xr: this.topRight.x, yt: this.bottomLeft.y, yb: this.topRight.y }; // xl is x-left, xr is x-right, yt is y-top, and yb is y-bottom
+
+        if (this.topRight.x == this.bottomLeft.x && this.topRight.y == this.bottomLeft.y) {
+            return;
+        }
+        console.log(this.topRight, this.bottomLeft);
+
+        // Example: Generate a random number between 10 and 20
+        //var randomX = this.getRandomNumber(this.bottomLeft.x, this.topRight.x);
+        //var randomY = this.getRandomNumber(this.bottomLeft.y, this.topRight.y);
+
+        var sites = [{ x: 150, y: 150 }, { x: 300, y: 300}, { x: 500, y: 500 } /* , ... */];
+        
         // a 'vertex' is an object exhibiting 'x' and 'y' properties. The
         // Voronoi object will add a unique 'voronoiId' property to all
         // sites. The 'voronoiId' can be used as a key to lookup the associated cell
@@ -125,11 +141,12 @@ export class Shape {
         var diagram = voronoi.compute(sites, bbox);
         var cells = diagram.cells;
 
+        console.log(cells);
         for (let i = 0; i < cells.length; i++) {
             if (cells[i].halfedges.length > 0) {
                 var vorShape = new Shape([]);
                 for (let q = 0; q < cells[i].halfedges.length; q++) {
-                    console.log(cells[i].halfedges);
+                    //console.log(cells[i].halfedges);
                     var point = cells[i].halfedges[q].getStartpoint();
                     vorShape.addPoint(new Point(point.x, point.y));
                     if (q == cells[i].halfedges.length-1) {

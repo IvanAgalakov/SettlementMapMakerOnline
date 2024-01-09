@@ -13,7 +13,7 @@ export default function Home() {
    const [shapes, setShapes] = useState<Shape[]>([]);
 
    const [isDrawing, setIsDrawing] = useState(false);
-   const [currentShape, setCurrentShape] = useState<Shape | null>(null);
+   const [currentShape, setCurrentShape] = useState<number | null>(null);
 
    const [panStart, setPanStart] = useState<Point>(new Point(0,0));
    const [pan, setPan] = useState<Point>(new Point(0,0));
@@ -23,7 +23,6 @@ export default function Home() {
    const [zoom, setZoom] = useState(1); // Initial zoom factor
 
   const handleScroll = (e: WheelEvent) => {
-    console.log(zoom)
     if (e.deltaY > 0) {
       setZoom(Math.max(zoom - 0.0001*e.deltaY, 0.1));
     } else {
@@ -33,13 +32,16 @@ export default function Home() {
 
   const updateCurrentShape = (s: Shape) => {
     for (let i = 0; i < shapes.length; i++) {
-      if (shapes[i] === currentShape) {
+      if (i == currentShape) {
+        console.log("updated");
+        s.CalculateCenter();
+        s.calculateVoronoi();
+        console.log(s);
         shapes[i] = s;
-        shapes[i].calculateVoronoi();
+        setCurrentShape(i);
         break;
       }
     }
-    setCurrentShape(new Shape(s.getPoints()));
   }
 
   const handleMouseDown = (e: MouseEvent<SVGSVGElement>) => {
@@ -51,7 +53,8 @@ export default function Home() {
     if (e.button === 0) {
       if (currentShape != null) {
         setIsDrawing(true);
-        updateCurrentShape(currentShape.addPoint(new Point(pointEnd.x/zoom-pan.x, pointEnd.y/zoom-pan.y)));
+        console.log("new point");
+        updateCurrentShape(shapes[currentShape].addPoint(new Point(pointEnd.x/zoom-pan.x, pointEnd.y/zoom-pan.y)));
       }
     } else if (e.button === 1) {
       setPanStart(pointEnd);
@@ -65,7 +68,7 @@ export default function Home() {
     const updatedPoint = new Point(e.clientX - rect.left, e.clientY - rect.top);
     if (isDrawing) {
       if (!currentShape) return;  
-      updateCurrentShape(currentShape.setLast(new Point(updatedPoint.x/zoom-pan.x, updatedPoint.y/zoom-pan.y)));
+      updateCurrentShape(shapes[currentShape].setLast(new Point(updatedPoint.x/zoom-pan.x, updatedPoint.y/zoom-pan.y)));
     }
     if (isPanning) {
       var deltaX = updatedPoint.x - panStart.x;
@@ -92,11 +95,15 @@ export default function Home() {
   const handleNewShape = () => {
     var shape = new Shape([]);
     setShapes([...shapes, shape]);
-    setCurrentShape(shape);
+    if (currentShape != null) {
+      setCurrentShape(currentShape+1);
+    } else {
+      setCurrentShape(0);
+    }
   }
 
   const handleShape = (index: number) => {
-    setCurrentShape(shapes[index]);
+    setCurrentShape(index);
   };
 
   const svgRef = useRef<SVGSVGElement | null>(null); // Reference to the SVG element
