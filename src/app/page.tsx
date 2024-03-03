@@ -136,6 +136,7 @@ export default function Home() {
       >
 
         {shapes.map((shape, i) => (
+          <>
           <polyline
             key={i}
             points={shape.getContainedDrawPoints().map(point => `${(point.x+pan.x)*zoom},${(point.y+pan.y)*zoom}`).join(' ')}
@@ -143,6 +144,14 @@ export default function Home() {
             stroke="black"
             strokeWidth={5*zoom}
           />
+          <polyline
+            key={i+10000}
+            points={shape.getDrawPoints().map(point => `${(point.x+pan.x)*zoom},${(point.y+pan.y)*zoom}`).join(' ')}
+            fill="none"
+            stroke="red"
+            strokeWidth={5*zoom}
+          />
+          </>
         ))}
       </svg>
 

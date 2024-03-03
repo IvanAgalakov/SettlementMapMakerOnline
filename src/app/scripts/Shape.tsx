@@ -125,13 +125,13 @@ export class Shape {
         if (this.topRight.x == this.bottomLeft.x && this.topRight.y == this.bottomLeft.y) {
             return;
         }
-        console.log(this.topRight, this.bottomLeft);
+        //console.log(this.topRight, this.bottomLeft);
 
         // Example: Generate a random number between 10 and 20
-        //var randomX = this.getRandomNumber(this.bottomLeft.x, this.topRight.x);
-        //var randomY = this.getRandomNumber(this.bottomLeft.y, this.topRight.y);
+        var randomX = this.getRandomNumber(this.bottomLeft.x, this.topRight.x);
+        var randomY = this.getRandomNumber(this.bottomLeft.y, this.topRight.y);
 
-        var sites = [{ x: 150, y: 150 }, { x: 300, y: 300}, { x: 500, y: 500 } /* , ... */];
+        var sites = [{ x: randomX, y: randomY }, { x: 300, y: 300}, { x: 500, y: 500 } /* , ... */];
         
         // a 'vertex' is an object exhibiting 'x' and 'y' properties. The
         // Voronoi object will add a unique 'voronoiId' property to all
@@ -141,7 +141,7 @@ export class Shape {
         var diagram = voronoi.compute(sites, bbox);
         var cells = diagram.cells;
 
-        console.log(cells);
+        //console.log(cells);
         for (let i = 0; i < cells.length; i++) {
             if (cells[i].halfedges.length > 0) {
                 var vorShape = new Shape([]);
@@ -157,6 +157,210 @@ export class Shape {
                 this.containedShapes.push(vorShape);
             }
         }
+
+        this.boundContainedShapes();
+    }
+
+    public getLines(reconnect:boolean) : Line[] {
+        var lines : Line[] = [];
+        for (let i = 1; i <= this.points.length; i++) {
+            if (i < this.points.length) {
+                lines.push(new Line(this.points[i - 1], this.points[i]));
+            } else if (reconnect) {
+                lines.push(new Line(this.points[i - 1], this.points[0]));
+            }
+        }
+
+        // connects the lines together
+        for (let i = 0; i < lines.length; i++) {
+            if (i + 1 != lines.length) {
+                lines[i].setNextLine(lines[i + 1]);
+            } else if (reconnect) {
+                lines[i].setNextLine(lines[0]);
+            }
+
+            if (i - 1 >= 0) {
+                lines[i].setPrevLine(lines[i - 1]);
+            } else if (reconnect) {
+                lines[i].setPrevLine(lines[lines.length-1]);
+            }
+        }
+        return lines;
+    }
+
+    public boundContainedShapes() {
+        var newShapes : Shape[] = [];
+
+        console.log(this.containedShapes.length);
+        for (let i = 0; i < this.containedShapes.length; i++) {
+            var constrain = this.getIntersectedShapes(this, this.containedShapes[i]);
+            console.log("number of new shapes ", constrain.length);
+            newShapes = newShapes.concat(constrain);
+        }
+
+        this.containedShapes = newShapes;
+        //this.containedShapes.push(this);
+        console.log("SELF INTERSECTS: ", this.selfIntersects());
+    }
+
+    public selfIntersects(): boolean {
+        var lines = this.getLines(true);
+        for (let l of lines) {
+            if (l.getIntersections(lines)[0].length > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public getIntersectedShapes(shapeBoundary: Shape, shapeConstrained: Shape) : Shape[] {
+        var intersectedShapes: Shape[] = [];
+        var boundaryLines = shapeBoundary.getLines(true);
+        var constrainedLines = shapeConstrained.getLines(true);
+
+        var intersectionPoints: Point[] = [];
+        var intersectionBoundaryLines: Line[] = [];
+        var intersectionConstrainedLines: Line[] = [];
+        for (let i = 0; i < constrainedLines.length; i++) {
+            var inter = constrainedLines[i].getIntersections(boundaryLines);
+            intersectionConstrainedLines = intersectionConstrainedLines.concat(inter[0]);
+            intersectionBoundaryLines = intersectionBoundaryLines.concat(inter[1]);
+            intersectionPoints = intersectionPoints.concat(inter[2]);
+        }
+
+        console.log("intersect = %d", intersectionConstrainedLines.length);
+        if (intersectionConstrainedLines.length == 0) {
+            intersectedShapes.push(shapeConstrained);
+            return intersectedShapes;
+        }
+
+        var usedIntersections: Point[] = [];
+        for (let i = 0; i < intersectionPoints.length; i++) {
+            if (usedIntersections.indexOf(intersectionPoints[i]) > -1) {
+                continue;
+            }
+
+            var shape: Shape = new Shape([]);
+            var curLine: Line | null = intersectionBoundaryLines[i];
+            var goingEnd: null | boolean = null;
+            shape.addPoint(intersectionPoints[i]);
+            for (let x = 0; x < boundaryLines.length; x++) {            // first half within the boundary shape between two intersections
+                if (curLine == null) {
+                    console.error("current line null.");
+                    break;
+                }
+                if (goingEnd == null) {
+                    if (shapeConstrained.isPointInside(curLine.getStart())) {
+                        shape.addPoint(curLine.getStart());
+                        curLine = curLine.getPrevLine();
+                        goingEnd = false;
+                    }
+                    else if (shapeConstrained.isPointInside(curLine.getEnd())) {
+                        shape.addPoint(curLine.getEnd());
+                        curLine = curLine.getNextLine();
+                        goingEnd = true;
+                    } else {
+                        console.error("LINE IS NOT INTERSECTING.");
+                    }
+                } else {
+                    if (intersectionBoundaryLines.indexOf(curLine) > -1) {                                  // if line has an intersection on it
+                        usedIntersections.push(intersectionPoints[intersectionBoundaryLines.indexOf(curLine)]);
+                        shape.addPoint(intersectionPoints[intersectionBoundaryLines.indexOf(curLine)]);     // add the point
+                        break;
+                    }
+                    if (goingEnd == true) {
+                        curLine = curLine.getNextLine();
+                    } else {
+                        curLine = curLine.getPrevLine();
+                    }
+                }
+            }
+
+
+            curLine = intersectionConstrainedLines[i];
+            goingEnd = null;
+            for (let x = 0; x < constrainedLines.length; x++) {            // second half within the constrained shape between two intersections
+                if (curLine == null) {
+                    console.error("current line null.");
+                    break;
+                }
+                if (goingEnd == null) {
+                    if (shapeBoundary.isPointInside(curLine.getStart())) {
+                        shape.addPoint(curLine.getStart());
+                        curLine = curLine.getPrevLine();
+                        goingEnd = false;
+                    }
+                    else if (shapeBoundary.isPointInside(curLine.getEnd())) {
+                        shape.addPoint(curLine.getEnd());
+                        curLine = curLine.getNextLine();
+                        goingEnd = true;
+                    } else {
+                        console.error("LINE IS NOT INTERSECTING.");
+                    }
+                } else {
+                    if (intersectionBoundaryLines.indexOf(curLine) > -1) {                                  // if line has an intersection on it
+                        // don't add anything, we added this on previous loop
+                        break;
+                    }
+                    if (goingEnd == true) {
+                        curLine = curLine.getNextLine();
+                    } else {
+                        curLine = curLine.getPrevLine();
+                    }
+                }
+            }
+            intersectedShapes.push(shape);
+        }
+
+        console.log("count = %d", intersectedShapes.length);
+        return intersectedShapes;
+    }
+
+    public getPerimeter() {
+        var last : Point | null = null;
+        var perimeter = 0;
+        for (let p of this.points) {
+            if (last != null) {
+                perimeter += p.getDistanceToPoint(last);
+            } else {
+                perimeter += p.getDistanceToPoint(this.points[this.points.length - 1]);
+            }
+            last = p;
+        }
+        return perimeter;
+    }
+
+    public isPointInside(p : Point) : boolean {
+        
+        this.CalculateCenter();
+        if (this.center.getDistanceToPoint(p) > this.getPerimeter()) {
+            return false;
+        }
+        
+        var lines : Line[] = [];
+        for (let i = 1; i <= this.points.length; i++) {
+            if (i < this.points.length) {
+                lines.push(new Line(this.points[i - 1], this.points[i]));
+            } else {
+                lines.push(new Line(this.points[i - 1], this.points[0]));
+            }
+        }
+
+        var testLine : Line = new Line(p, new Point(p.x - this.getPerimeter(), p.y - this.getPerimeter()));
+        
+        var numberOfIntersections = 0;
+        for (let i = 0; i < lines.length; i++) {
+            var inter : Point | null = lines[i].getIntersection(testLine);
+            if (inter != null) {
+                if (inter.x > p.x) {
+                    if (p.x < this.topRight.x && p.y < this.topRight.y && p.x > this.bottomLeft.x && p.y > this.bottomLeft.y) {
+                        numberOfIntersections++;
+                    }
+                }
+            }
+        }
+        
+        return numberOfIntersections%2 == 1;
     }
 
 }

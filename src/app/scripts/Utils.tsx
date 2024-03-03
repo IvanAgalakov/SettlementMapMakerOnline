@@ -16,5 +16,4 @@ export class Utils {
         return new Point(start.x + run * formula, start.y + rise * formula);
     }
     
-    
 }
