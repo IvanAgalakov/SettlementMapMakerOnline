@@ -269,8 +269,14 @@ export class Shape {
                         break;
                     }
                     if (goingEnd == true) {
+                        if (shapeConstrained.isPointInside(curLine.getEnd())) {
+                            shape.addPoint(curLine.getEnd());
+                        }
                         curLine = curLine.getNextLine();
                     } else {
+                        if (shapeConstrained.isPointInside(curLine.getStart())) {
+                            shape.addPoint(curLine.getStart());
+                        }
                         curLine = curLine.getPrevLine();
                     }
                 }
